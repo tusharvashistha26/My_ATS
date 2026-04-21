@@ -1,0 +1,94 @@
+<!doctype html>
+<html>
+
+<head>
+  <title>ATS Result | ResumeAI</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+
+<body>
+
+  <!-- NAVBAR -->
+  <nav class="navbar">
+    <div class="logo">🚀 ResumeAI</div>
+
+    <div class="nav-links">
+      <a href="/">ATS Analyzer</a>
+      <a href="/generate">Create Resume</a>
+      <a href="/dashboard">Dashboard</a>
+      <a href="/ai-resume">AI Resume Improver</a>
+    </div>
+
+    <a href="/logout" class="logout-btn">Logout</a>
+  </nav>
+
+  <div class="wrapper">
+
+    <div class="container glass">
+
+      <h2>Your ATS Score</h2>
+
+      <div class="score-wrapper">
+        <div class="circle" id="scoreCircle">
+
+          <p class="score-label">
+            ATS Compatibility Rating
+          </p>
+
+          <div class="score-text" id="scoreText">0%</div>
+
+        </div>
+      </div>
+
+      {% for category, metrics in breakdown.items() %}
+      <div class="section">
+        <h3>{{ category }}</h3>
+        {% for metric, value in metrics.items() %}
+        <div class="metric">
+          <span>{{ metric }}</span>
+          <span>{{ value }}</span>
+        </div>
+        {% endfor %}
+      </div>
+      {% endfor %}
+
+      <div class="btn-group">
+        <a href="/" class="btn btn-secondary">← Analyze Another Resume</a>
+      </div>
+
+    </div>
+
+  </div>
+
+  <script>
+    const score = {{ overall_score }};
+    const circle = document.getElementById("scoreCircle");
+    const scoreText = document.getElementById("scoreText");
+
+    let color;
+
+    if (score < 60) color = "#ef4444";
+    else if (score < 80) color = "#facc15";
+    else color = "#22c55e";
+
+    let current = 0;
+    const interval = setInterval(() => {
+      if (current >= score) clearInterval(interval);
+      else {
+        current++;
+        scoreText.innerText = current + "%";
+      }
+    }, 15);
+
+    setTimeout(() => {
+      circle.style.background =
+        `conic-gradient(${color} ${score * 3.6}deg, rgba(255,255,255,0.2) ${score * 3.6}deg)`;
+
+      circle.style.boxShadow = `0 0 30px ${color}`;
+    }, 400);
+  </script>
+
+</body>
+
+</html>

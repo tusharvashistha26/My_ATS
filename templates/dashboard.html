@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Dashboard | ResumeAI</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+
+<body class="dashboard-page">
+
+    <!-- NAVBAR -->
+    <nav class="navbar">
+        <div class="logo">🚀 ResumeAI</div>
+
+        <div class="nav-links">
+            <a href="/">ATS Analyzer</a>
+            <a href="/generate">Create Resume</a>
+            <a href="/dashboard">Dashboard</a>
+            <a href="/ai-resume">AI Resume Improver</a>
+        </div>
+
+        <a href="/logout" class="logout-btn">Logout</a>
+    </nav>
+
+    <!-- MAIN -->
+    <div class="wrapper">
+
+        <div class="container glass">
+
+            <!-- HEADER -->
+            <div class="header">
+                <h2>Welcome back, {{user}}</h2>
+                <p>Manage your resumes and track ATS performance.</p>
+            </div>
+
+            <!-- STATS -->
+            <div class="stats">
+
+                <div class="stat-card">
+                    <h3>{{resumes|length}}</h3>
+                    <p>Total Resumes</p>
+                </div>
+
+                <div class="stat-card">
+                    <h3>{{ats_scores|length}}</h3>
+                    <p>ATS Checks</p>
+                </div>
+
+                <div class="stat-card">
+                    <h3>
+                        {% if ats_scores %}
+                        {{ats_scores[0][0]}}
+                        {% else %}
+                        0
+                        {% endif %}
+                    </h3>
+                    <p>Latest ATS Score</p>
+                </div>
+
+            </div>
+
+            <!-- RESUMES -->
+            <div class="card">
+
+                <h3>Your Resumes</h3>
+
+                {% if resumes %}
+
+                <div class="table-wrapper">
+                    <table>
+                        <tr>
+                            <th>File</th>
+                            <th>Date</th>
+                            <th>Action</th>
+                        </tr>
+
+                        {% for r in resumes %}
+                        <tr>
+                            <td>{{r[0]}}</td>
+                            <td>{{r[1]}}</td>
+                            <td>
+                                <a href="/download/{{r[0]}}" class="btn btn-secondary">
+                                    Download
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </table>
+                </div>
+
+                {% else %}
+                <div class="empty">
+                    📄 No resumes yet. Start by creating one.
+                </div>
+                {% endif %}
+
+            </div>
+
+            <!-- ATS HISTORY -->
+            <div class="card">
+
+                <h3>ATS Score History</h3>
+
+                {% if ats_scores %}
+
+                <div class="table-wrapper">
+                    <table>
+                        <tr>
+                            <th>Score</th>
+                            <th>Date</th>
+                        </tr>
+
+                        {% for a in ats_scores %}
+                        <tr>
+                            <td>{{a[0]}} / 100</td>
+                            <td>{{a[1]}}</td>
+                        </tr>
+                        {% endfor %}
+                    </table>
+                </div>
+
+                {% else %}
+                <div class="empty">
+                    📊 No ATS scans yet.
+                </div>
+                {% endif %}
+
+            </div>
+
+        </div>
+
+    </div>
+
+</body>
+
+</html>

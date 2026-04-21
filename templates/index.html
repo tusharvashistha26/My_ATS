@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <title>ATS Score Checker | ResumeAI</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+
+<body class="ats-page">
+
+    <!-- NAVBAR -->
+    <nav class="navbar">
+        <div class="logo">🚀 ResumeAI</div>
+
+        <div class="nav-links">
+            <a href="/">ATS Analyzer</a>
+            <a href="/generate">Create Resume</a>
+            <a href="/dashboard">Dashboard</a>
+            <a href="/ai-resume">AI Resume Improver</a>
+        </div>
+
+        <a href="/logout" class="logout-btn">Logout</a>
+    </nav>
+
+    <!-- MAIN -->
+    <div class="wrapper center">
+
+        <div class="container glass">
+
+            <h1>🚀 ATS Resume Analyzer</h1>
+
+            <p class="subtitle">
+                Upload your resume and instantly check ATS compatibility.
+            </p>
+
+            <!-- FORM -->
+            <form id="atsForm" action="/check-ats" method="post" enctype="multipart/form-data">
+
+                <label>Upload Resume</label>
+
+                <div class="upload-box" id="uploadBox">
+                    <input type="file" name="file" id="fileInput" accept=".pdf,.doc,.docx" required>
+                    <p>📄 Drag & drop or click to upload</p>
+                    <span id="fileName"></span>
+                </div>
+
+                <button type="submit" class="btn btn-primary" id="analyzeBtn">
+                    Analyze Resume
+                </button>
+
+                <div class="generate-wrapper">
+                    <a href="/generate" class="generate-btn">
+                        ✨ Generate Professional Resume
+                    </a>
+                </div>
+
+            </form>
+
+            <!-- LOADING -->
+            <div class="loading" id="loading">
+                <div class="spinner"></div>
+                <p>Analyzing your resume...</p>
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- JS -->
+    <script>
+        const form = document.getElementById("atsForm");
+        const btn = document.getElementById("analyzeBtn");
+        const loading = document.getElementById("loading");
+        const fileInput = document.getElementById("fileInput");
+        const fileName = document.getElementById("fileName");
+        const uploadBox = document.getElementById("uploadBox");
+
+        // Show file name
+        fileInput.addEventListener("change", () => {
+            fileName.innerText = fileInput.files[0]?.name || "";
+        });
+
+        // Drag & drop
+        uploadBox.addEventListener("dragover", e => {
+            e.preventDefault();
+            uploadBox.classList.add("drag");
+        });
+
+        uploadBox.addEventListener("dragleave", () => {
+            uploadBox.classList.remove("drag");
+        });
+
+        uploadBox.addEventListener("drop", e => {
+            e.preventDefault();
+            fileInput.files = e.dataTransfer.files;
+            fileName.innerText = fileInput.files[0].name;
+            uploadBox.classList.remove("drag");
+        });
+
+        // Submit
+        form.addEventListener("submit", async function (e) {
+            e.preventDefault();
+
+            loading.style.display = "block";
+            btn.disabled = true;
+            btn.innerText = "Analyzing...";
+
+            let formData = new FormData(form);
+
+            try {
+                let response = await fetch("/check-ats", {
+                    method: "POST",
+                    body: formData
+                });
+
+                let html = await response.text();
+
+                document.body.innerHTML = html;
+
+            } catch (err) {
+                alert("Error analyzing resume. Try again.");
+            }
+
+            loading.style.display = "none";
+            btn.disabled = false;
+            btn.innerText = "Analyze Resume";
+        });
+    </script>
+
+</body>
+
+</html>

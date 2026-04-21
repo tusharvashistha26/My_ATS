@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>AI Resume Improver | ResumeAI</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+
+<body class="ai-page">
+
+    <!-- NAVBAR -->
+    <nav class="navbar">
+        <div class="logo">🚀 ResumeAI</div>
+
+        <div class="nav-links">
+            <a href="/">ATS Analyzer</a>
+            <a href="/generate">Create Resume</a>
+            <a href="/dashboard">Dashboard</a>
+            <a href="/ai-resume">AI Resume Improver</a>
+        </div>
+
+        <a href="/logout" class="logout-btn">Logout</a>
+    </nav>
+
+    <!-- MAIN -->
+    <div class="wrapper">
+
+        <div class="container glass">
+
+            <h1>✨ AI Resume Improver</h1>
+
+            <p class="subtitle">
+                Paste your resume bullet points and let AI rewrite them to be more impactful, quantified, and
+                ATS-friendly.
+            </p>
+
+            <!-- INPUT -->
+            <div class="section">
+                <h3>Your Resume Content</h3>
+
+                <textarea id="resumeText" placeholder="Example:
+• Built a website for a college project
+• Automated tasks using Python
+• Led a team of 4 developers"></textarea>
+            </div>
+
+            <!-- ACTION BUTTONS -->
+            <div class="btn-group center">
+
+                <button class="btn btn-primary" onclick="improve()">
+                    🚀 Improve with AI
+                </button>
+
+                <button class="btn btn-secondary" onclick="copyResult()">
+                    📋 Copy Result
+                </button>
+
+            </div>
+
+            <!-- LOADING -->
+            <div class="loading" id="loading">
+                <div class="spinner"></div>
+                <div>Improving your resume...</div>
+            </div>
+
+            <!-- RESULT -->
+            <div class="section result-box" id="resultBox">
+
+                <h3>✨ Improved Output</h3>
+
+                <div class="result" id="result">
+                    Your improved resume will appear here...
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- JS -->
+    <script>
+
+        async function improve() {
+
+            const text = document.getElementById("resumeText").value.trim();
+
+            if (!text) {
+                alert("Please paste resume content first.");
+                return;
+            }
+
+            const loading = document.getElementById("loading");
+            const resultBox = document.getElementById("resultBox");
+            const result = document.getElementById("result");
+
+            loading.style.display = "block";
+            result.innerText = "";
+
+            try {
+
+                const response = await fetch("/ai-improve-text", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ text: text })
+                });
+
+                const data = await response.json();
+
+                result.innerText = data.result || "No improvement generated.";
+                resultBox.style.display = "block";
+
+            } catch (err) {
+
+                result.innerText = "❌ Error improving resume. Please try again.";
+                resultBox.style.display = "block";
+
+            }
+
+            loading.style.display = "none";
+        }
+
+        function copyResult() {
+
+            const result = document.getElementById("result").innerText;
+
+            if (!result || result.includes("appear here")) {
+                alert("Nothing to copy yet.");
+                return;
+            }
+
+            navigator.clipboard.writeText(result);
+            alert("✅ Copied to clipboard!");
+        }
+
+    </script>
+
+</body>
+
+</html>
