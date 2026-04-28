@@ -5,3 +5,4 @@ python-multipart
 passlib[bcrypt]
 python-docx
 python-dotenv
+authlib
