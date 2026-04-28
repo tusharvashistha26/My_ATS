@@ -6,3 +6,4 @@ passlib[bcrypt]
 python-docx
 python-dotenv
 authlib
+httpx
