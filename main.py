@@ -13,46 +13,45 @@ from resume_generator import create_resume_docx
 from openai import OpenAI
 from pydantic import BaseModel
 import os
-from dotenv import load_dotenv
 
 load_dotenv()
 
+# ---------------- OPENAI ----------------
 api_key = os.getenv("OPENAI_API_KEY")
-
 if not api_key:
-    raise ValueError("OPENAI_API_KEY not found. Check your .env or environment variables.")
+    raise ValueError("OPENAI_API_KEY not found")
 
 client = OpenAI(api_key=api_key)
 
 def improve_resume(text):
-
     prompt = f"""
     Improve the following resume bullet points.
 
     Make them:
     - professional
     - impactful
-    - quantified if possible
+    - quantified
     - ATS friendly
 
-    Resume content:
+    Resume:
     {text}
     """
 
     response = client.chat.completions.create(
         model="gpt-4o-mini",
         messages=[
-            {"role":"system","content":"You are an expert resume writer."},
-            {"role":"user","content":prompt}
+            {"role": "system", "content": "You are an expert resume writer."},
+            {"role": "user", "content": prompt}
         ]
     )
 
     return response.choices[0].message.content
 
+
 # ---------------- DATABASE ----------------
 from database import conn, cursor
 
-# ---------------- PASSWORD HASHING ----------------
+# ---------------- PASSWORD ----------------
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 def hash_password(password):
@@ -61,6 +60,7 @@ def hash_password(password):
 def verify_password(plain, hashed):
     return pwd_context.verify(plain, hashed)
 
+
 # ---------------- FOLDERS ----------------
 UPLOAD_DIR = "uploads"
 TEMP_DIR = "temp"
@@ -68,7 +68,7 @@ TEMP_DIR = "temp"
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 os.makedirs(TEMP_DIR, exist_ok=True)
 
-# ---------------- APP INIT ----------------
+# ---------------- APP ----------------
 app = FastAPI()
 
 app.mount("/static", StaticFiles(directory="static"), name="static")
@@ -79,13 +79,13 @@ app.add_middleware(
     secret_key="SUPER_SECRET_KEY_123"
 )
 
+# ---------------- GOOGLE AUTH ----------------
 config_data = {
-    "GOOGLE_CLIENT_ID": "YOUR_GOOGLE_CLIENT_ID",
-    "GOOGLE_CLIENT_SECRET": "YOUR_GOOGLE_CLIENT_SECRET"
+    "GOOGLE_CLIENT_ID": os.getenv("GOOGLE_CLIENT_ID"),
+    "GOOGLE_CLIENT_SECRET": os.getenv("GOOGLE_CLIENT_SECRET")
 }
 
 config = Config(environ=config_data)
-
 oauth = OAuth(config)
 
 oauth.register(
@@ -93,101 +93,28 @@ oauth.register(
     client_id=config("GOOGLE_CLIENT_ID"),
     client_secret=config("GOOGLE_CLIENT_SECRET"),
     server_metadata_url="https://accounts.google.com/.well-known/openid-configuration",
-    client_kwargs={
-        "scope": "openid email profile"
-    }
+    client_kwargs={"scope": "openid email profile"}
 )
 
-@app.post("/ai-improve")
-async def ai_improve(resume: UploadFile = File(...)):
-
-    content = await resume.read()
-    text = content.decode("utf-8", errors="ignore")
-
-    improved = improve_resume(text)
-
-    return {"result": improved}
-
-
-class ResumeText(BaseModel):
-    text: str
-
-
-@app.post("/ai-improve-text")
-def ai_improve_text(data: ResumeText):
-
-    improved = improve_resume(data.text)
-
-    return {"result": improved}
-
-@app.get("/ai-resume", response_class=HTMLResponse)
-def ai_resume_page(request: Request):
-    return templates.TemplateResponse("ai_resume.html", {"request": request})
 
 # ---------------- HOME ----------------
 @app.get("/", response_class=HTMLResponse)
 def home(request: Request):
-
     user = request.cookies.get("user")
-
     if not user:
         return RedirectResponse("/login")
-
-    return templates.TemplateResponse("index.html", {
-        "request": request,
-        "user": user
-    })
-
-# ---------------- SIGNUP ----------------
-@app.get("/signup", response_class=HTMLResponse)
-def signup_page(request: Request):
-
-    user = request.cookies.get("user")
-
-    if user:
-        return RedirectResponse("/dashboard", status_code=302)
-
-    return templates.TemplateResponse("signup.html", {"request": request})
+    return templates.TemplateResponse("index.html", {"request": request, "user": user})
 
 
-@app.post("/signup")
-async def signup(request: Request):
-
-    form = await request.form()
-
-    name = form.get("name")
-    email = form.get("email")
-    password = hash_password(form.get("password"))
-
-    try:
-        cursor.execute(
-            "INSERT INTO users (name,email,password) VALUES (?,?,?)",
-            (name, email, password)
-        )
-        conn.commit()
-
-    except:
-        return HTMLResponse("User already exists")
-
-    return RedirectResponse("/login", status_code=302)
-
-# ---------------- LOGIN ----------------
+# ---------------- AUTH ----------------
 @app.get("/login", response_class=HTMLResponse)
 def login_page(request: Request):
-
-    user = request.cookies.get("user")
-
-    if user:
-        return RedirectResponse("/", status_code=302)
-
     return templates.TemplateResponse("login.html", {"request": request})
 
 
 @app.post("/login")
 async def login(request: Request):
-
     form = await request.form()
-
     email = form.get("email")
     password = form.get("password")
 
@@ -201,49 +128,59 @@ async def login(request: Request):
         return HTMLResponse("Wrong password")
 
     response = RedirectResponse("/", status_code=302)
-
-    response.set_cookie(
-        key="user",
-        value=email,
-        httponly=True,
-        samesite="lax"
-    )
-
+    response.set_cookie("user", email, httponly=True)
     return response
 
-# ---------------- LOGOUT ----------------
+
+@app.get("/signup", response_class=HTMLResponse)
+def signup_page(request: Request):
+    return templates.TemplateResponse("signup.html", {"request": request})
+
+
+@app.post("/signup")
+async def signup(request: Request):
+    form = await request.form()
+
+    try:
+        cursor.execute(
+            "INSERT INTO users (name,email,password) VALUES (?,?,?)",
+            (
+                form.get("name"),
+                form.get("email"),
+                hash_password(form.get("password"))
+            )
+        )
+        conn.commit()
+    except:
+        return HTMLResponse("User already exists")
+
+    return RedirectResponse("/login", status_code=302)
+
+
 @app.get("/logout")
 def logout():
-
-    response = RedirectResponse("/", status_code=302)
+    response = RedirectResponse("/login")
     response.delete_cookie("user")
-
     return response
 
-# ---------------- Google route --------@app.get("/auth/google")
+
+# ---------------- GOOGLE LOGIN ----------------
 @app.get("/auth/google")
 async def google_login(request: Request):
-
     redirect_uri = request.url_for("google_callback")
-
     return await oauth.google.authorize_redirect(request, redirect_uri)
 
-#--------- Google callback route ---------
+
 @app.get("/auth/google/callback")
 async def google_callback(request: Request):
-
     token = await oauth.google.authorize_access_token(request)
-
     user = token.get("userinfo")
 
     email = user["email"]
     name = user["name"]
 
-    # check if user exists
     cursor.execute("SELECT * FROM users WHERE email=?", (email,))
-    existing = cursor.fetchone()
-
-    if not existing:
+    if not cursor.fetchone():
         cursor.execute(
             "INSERT INTO users (name,email,password) VALUES (?,?,?)",
             (name, email, "google_login")
@@ -252,8 +189,30 @@ async def google_callback(request: Request):
 
     response = RedirectResponse("/")
     response.set_cookie("user", email)
-
     return response
+
+
+# ---------------- GENERATE PAGE ----------------
+@app.get("/generate", response_class=HTMLResponse)
+def generate_page(request: Request):
+    return templates.TemplateResponse("generate.html", {"request": request})
+
+# ---------------- AI RESUME PAGE ----------------
+@app.get("/ai-resume", response_class=HTMLResponse)
+def ai_resume_page(request: Request):
+
+    user = request.cookies.get("user")
+
+    if not user:
+        return RedirectResponse("/login", status_code=302)
+
+    return templates.TemplateResponse(
+        "ai_resume.html",
+        {
+            "request": request,
+            "user": user
+        }
+    )
 
 # ---------------- DASHBOARD ----------------
 @app.get("/dashboard", response_class=HTMLResponse)
@@ -264,12 +223,14 @@ def dashboard(request: Request):
     if not user:
         return RedirectResponse("/login", status_code=302)
 
+    # Fetch resumes
     cursor.execute(
         "SELECT file_name, created_at FROM resumes WHERE user_email=?",
         (user,)
     )
     resumes = cursor.fetchall()
 
+    # Fetch ATS scores
     cursor.execute(
         "SELECT score, created_at FROM ats_history WHERE user_email=?",
         (user,)
@@ -280,42 +241,24 @@ def dashboard(request: Request):
         "dashboard.html",
         {
             "request": request,
+            "user": user,
             "resumes": resumes,
-            "ats_scores": ats_scores,
-            "user": user
-        }
-    )
-
-# ---------------- GENERATE FORM ----------------
-@app.get("/generate", response_class=HTMLResponse)
-def generate_form(request: Request):
-
-    user = request.cookies.get("user")
-
-    if not user:
-        return RedirectResponse("/login", status_code=302)
-
-    return templates.TemplateResponse(
-        "generate.html",
-        {
-            "request": request,
-            "user": user
+            "ats_scores": ats_scores
         }
     )
 
 # ---------------- CREATE RESUME ----------------
 @app.post("/create-resume")
-async def generate_resume(request: Request):
+async def create_resume(request: Request):
 
     user = request.cookies.get("user")
-
     if not user:
-        return RedirectResponse("/login", status_code=302)
+        return RedirectResponse("/login")
 
     form = await request.form()
 
-    # -------- BASIC INFO --------
     resume_data = {
+        "template": form.get("template"),
         "name": form.get("name"),
         "city": form.get("city"),
         "state": form.get("state"),
@@ -324,80 +267,77 @@ async def generate_resume(request: Request):
         "linkedin": form.get("linkedin"),
         "github": form.get("github"),
         "portfolio": form.get("portfolio"),
+
+        "summary": form.get("summary"),
         "skills": form.get("skills"),
         "tools": form.get("tools"),
-        "achievement": form.get("achievement"),
+
+        # ✅ FIXED
+        "achievements": form.get("achievements", "").split("\n"),
+        "extracurricular_content": form.get("extracurricular"),
     }
 
-    # -------- EDUCATION --------
-    degrees = form.getlist("education_degree[]")
-    institutions = form.getlist("education_institution[]")
-    durations = form.getlist("education_duration[]")
-    cgpas = form.getlist("education_cgpa[]")
+    # EDUCATION
+    resume_data["educations"] = [
+        {
+            "degree": d,
+            "institution": i,
+            "duration": du,
+            "cgpa": c
+        }
+        for d, i, du, c in zip(
+            form.getlist("education_degree[]"),
+            form.getlist("education_institution[]"),
+            form.getlist("education_duration[]"),
+            form.getlist("education_cgpa[]")
+        ) if d
+    ]
 
-    educations = []
-    for i in range(len(degrees)):
-        if degrees[i]:
-            educations.append({
-                "degree": degrees[i],
-                "institution": institutions[i],
-                "duration": durations[i],
-                "cgpa": cgpas[i]
-            })
+    # EXPERIENCE
+    resume_data["experiences"] = [
+        {
+            "title": t,
+            "company": c,
+            "duration": d,
+            "description": desc
+        }
+        for t, c, d, desc in zip(
+            form.getlist("exp_title[]"),
+            form.getlist("exp_company[]"),
+            form.getlist("exp_duration[]"),
+            form.getlist("exp_description[]")
+        ) if t
+    ]
 
-    resume_data["educations"] = educations
+    # PROJECTS
+    resume_data["projects"] = [
+        {
+            "title": t,
+            "duration": d,
+            "description": desc
+        }
+        for t, d, desc in zip(
+            form.getlist("project_title[]"),
+            form.getlist("project_duration[]"),
+            form.getlist("project_description[]")
+        ) if t
+    ]
 
-    # -------- INTERNSHIPS --------
-    titles = form.getlist("internship_title[]")
-    durations = form.getlist("internship_duration[]")
-    descriptions = form.getlist("internship_description[]")
+    # CERTIFICATES
+    resume_data["certificates"] = [
+        {
+            "title": t,
+            "issuer": i,
+            "duration": d
+        }
+        for t, i, d in zip(
+            form.getlist("certificate_title[]"),
+            form.getlist("certificate_issuer[]"),
+            form.getlist("certificate_duration[]")
+        ) if t
+    ]
 
-    internships = []
-    for i in range(len(titles)):
-        if titles[i]:
-            internships.append({
-                "title": titles[i],
-                "duration": durations[i],
-                "description": descriptions[i]
-            })
-
-    resume_data["internships"] = internships
-
-    # -------- PROJECTS --------
-    titles = form.getlist("project_title[]")
-    durations = form.getlist("project_duration[]")
-    descriptions = form.getlist("project_description[]")
-
-    projects = []
-    for i in range(len(titles)):
-        if titles[i]:
-            projects.append({
-                "title": titles[i],
-                "duration": durations[i],
-                "description": descriptions[i]
-            })
-
-    resume_data["projects"] = projects
-
-    # -------- CERTIFICATES --------
-    titles = form.getlist("certificate_title[]")
-    durations = form.getlist("certificate_duration[]")
-
-    certificates = []
-    for i in range(len(titles)):
-        if titles[i]:
-            certificates.append({
-                "title": titles[i],
-                "duration": durations[i]
-            })
-
-    resume_data["certificates"] = certificates
-
-    # -------- EXTRACURRICULAR --------
-    resume_data["extracurricular_content"] = form.get("extracurricular_content")
-
-    # -------- GENERATE FILE --------
-    file_path = create_resume_docx(resume_data, out_dir=UPLOAD_DIR)
+    file_path = create_resume_docx(resume_data)
     file_name = os.path.basename(file_path)
 
     cursor.execute(
@@ -407,49 +347,28 @@ async def generate_resume(request: Request):
     conn.commit()
 
     return FileResponse(
-        path=file_path,
+        file_path,
         filename=file_name,
         media_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document"
     )
 
-# ---------------- ATS CHECK ----------------
+
+# ---------------- ATS ----------------
 @app.post("/check-ats", response_class=HTMLResponse)
 async def check_ats(request: Request, file: UploadFile = File(...)):
 
-    user = request.cookies.get("user")
-
-    file_id = f"{uuid.uuid4().hex}_{file.filename}"
-    temp_path = os.path.join(TEMP_DIR, file_id)
+    temp_path = os.path.join(TEMP_DIR, f"{uuid.uuid4().hex}.pdf")
 
     with open(temp_path, "wb") as f:
-        content = await file.read()
-        f.write(content)
+        f.write(await file.read())
 
-    overall_score, breakdown = calculate_ats_score(temp_path)
-
-    if user:
-        cursor.execute(
-            "INSERT INTO ats_history (user_email,score) VALUES (?,?)",
-            (user, overall_score)
-        )
-        conn.commit()
+    score, breakdown = calculate_ats_score(temp_path)
 
     return templates.TemplateResponse(
         "result.html",
         {
             "request": request,
-            "overall_score": overall_score,
+            "overall_score": score,
             "breakdown": breakdown
         }
     )
-
-# ---------------- DOWNLOAD ----------------
-@app.get("/download/{file_name}")
-def download(file_name: str):
-
-    path = os.path.join(UPLOAD_DIR, file_name)
-
-    if os.path.exists(path):
-        return FileResponse(path, filename=file_name)
-
-    return RedirectResponse("/", status_code=302)

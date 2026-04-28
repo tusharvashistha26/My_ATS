@@ -10,131 +10,14 @@
 
 <body class="resume-page">
 
-    <div class="resume">
-
-        <!-- NAME -->
-        <h1>{{ name }}</h1>
-
-        <!-- CONTACT -->
-        <div class="contact">
-            {{ city }}, {{ state }} |
-            {{ phone }} |
-            {{ email }}
-            {% if linkedin %} | {{ linkedin }}{% endif %}
-            {% if github %} | {{ github }}{% endif %}
-            {% if portfolio %} | {{ portfolio }}{% endif %}
-        </div>
-
-        <!-- EDUCATION -->
-        {% if educations %}
-        <h2>Education</h2>
-        {% for edu in educations %}
-        <div class="entry">
-            <span class="entry-title">{{ edu.degree }}</span>
-            {% if edu.duration %}
-            <span class="entry-duration">{{ edu.duration }}</span>
-            {% endif %}
-            <div class="clearfix"></div>
-
-            {{ edu.institution }}
-            {% if edu.cgpa %} | CGPA: {{ edu.cgpa }}{% endif %}
-        </div>
-        {% endfor %}
-        {% endif %}
-
-        <!-- SKILLS -->
-        {% if skills or tools %}
-        <h2>Technical Skills</h2>
-
-        {% if tools %}
-        <div><strong>Tools:</strong> {{ tools }}</div>
-        {% endif %}
-
-        {% if skills %}
-        <div><strong>Skills:</strong> {{ skills }}</div>
-        {% endif %}
-        {% endif %}
-
-        <!-- INTERNSHIPS -->
-        {% if internships %}
-        <h2>Internships</h2>
-        {% for intern in internships %}
-        <div class="entry">
-            <span class="entry-title">{{ intern.title }}</span>
-            {% if intern.duration %}
-            <span class="entry-duration">{{ intern.duration }}</span>
-            {% endif %}
-            <div class="clearfix"></div>
-
-            <ul>
-                {% for line in intern.description.split('\n') %}
-                {% if line.strip() %}
-                <li>{{ line }}</li>
-                {% endif %}
-                {% endfor %}
-            </ul>
-        </div>
-        {% endfor %}
-        {% endif %}
-
-        <!-- PROJECTS -->
-        {% if projects %}
-        <h2>Projects</h2>
-        {% for project in projects %}
-        <div class="entry">
-            <span class="entry-title">{{ project.title }}</span>
-            {% if project.duration %}
-            <span class="entry-duration">{{ project.duration }}</span>
-            {% endif %}
-            <div class="clearfix"></div>
-
-            <ul>
-                {% for line in project.description.split('\n') %}
-                {% if line.strip() %}
-                <li>{{ line }}</li>
-                {% endif %}
-                {% endfor %}
-            </ul>
-        </div>
-        {% endfor %}
-        {% endif %}
-
-        <!-- ACHIEVEMENTS -->
-        {% if achievements %}
-        <h2>Achievements</h2>
-        <ul>
-            {% for a in achievements %}
-            <li>{{ a }}</li>
-            {% endfor %}
-        </ul>
-        {% endif %}
-
-        <!-- CERTIFICATES -->
-        {% if certificates %}
-        <h2>Certificates</h2>
-        <ul>
-            {% for cert in certificates %}
-            <li>
-                {{ cert.title }}
-                {% if cert.duration %} — {{ cert.duration }}{% endif %}
-            </li>
-            {% endfor %}
-        </ul>
-        {% endif %}
-
-        <!-- EXTRACURRICULAR -->
-        {% if extracurricular_content %}
-        <h2>Extracurricular Activities</h2>
-        <ul>
-            {% for line in extracurricular_content.split('\n') %}
-            {% if line.strip() %}
-            <li>{{ line }}</li>
-            {% endif %}
-            {% endfor %}
-        </ul>
-        {% endif %}
-
-    </div>
+    <!-- TEMPLATE SWITCH -->
+    {% if template == "modern" %}
+    {% include "templates/modern.html" %}
+    {% elif template == "sidebar" %}
+    {% include "templates/sidebar.html" %}
+    {% else %}
+    {% include "templates/classic.html" %}
+    {% endif %}
 
 </body>
 

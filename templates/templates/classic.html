@@ -1,0 +1,32 @@
+<div class="resume classic">
+
+    <h1>{{ name }}</h1>
+
+    <div class="contact">
+        {{ email }} | {{ phone }}
+    </div>
+
+    {% if summary %}
+    <h2>Summary</h2>
+    <p>{{ summary }}</p>
+    {% endif %}
+
+    <h2>Education</h2>
+    {% for edu in educations %}
+    <p><b>{{ edu.degree }}</b> - {{ edu.institution }} ({{ edu.duration }})</p>
+    {% endfor %}
+
+    <h2>Experience</h2>
+    {% for exp in experiences %}
+    <p><b>{{ exp.title }}</b> - {{ exp.company }}</p>
+    <ul>
+        {% for line in exp.description.split('\n') %}
+        <li>{{ line }}</li>
+        {% endfor %}
+    </ul>
+    {% endfor %}
+
+    <h2>Skills</h2>
+    <p>{{ skills }}</p>
+
+</div>

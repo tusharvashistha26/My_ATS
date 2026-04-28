@@ -24,98 +24,136 @@
     <a href="/logout" class="logout-btn">Logout</a>
   </nav>
 
-  <!-- MAIN -->
   <div class="wrapper layout">
 
-    <!-- LEFT: FORM -->
+    <!-- LEFT FORM -->
     <div class="form-section">
-      <div class="container white">
+      <div class="container">
 
-        <h1 class="center">📄 Resume Builder</h1>
+        <h1>📄 Resume Builder</h1>
 
         <form method="post" id="resumeForm">
 
-          <div id="sectionsContainer">
-
-            <!-- PERSONAL -->
-            <div class="section">
-              <h3>Personal Information</h3>
-
-              <input type="text" name="name" placeholder="Full Name">
-
-              <div class="row">
-                <input type="text" name="city" placeholder="City">
-                <input type="text" name="state" placeholder="State">
-              </div>
-
-              <div class="row">
-                <input type="text" name="phone" placeholder="Phone">
-                <input type="email" name="email" placeholder="Email">
-              </div>
-            </div>
-
-            <!-- SKILLS -->
-            <div class="section">
-              <h3>Skills</h3>
-              <textarea name="skills" rows="2"></textarea>
-            </div>
-
-            <!-- EDUCATION -->
-            <div class="section">
-              <h3>Education</h3>
-
-              <div id="educationSection">
-                <div class="section-block">
-                  <input type="text" name="education_degree[]" placeholder="Degree">
-                  <input type="text" name="education_institution[]" placeholder="Institution">
-                  <input type="text" name="education_duration[]" placeholder="Duration">
-                </div>
-              </div>
-
-              <button type="button" class="btn btn-secondary" onclick="addBlock('educationSection')">
-                + Add Education
-              </button>
-            </div>
-
-            <!-- PROJECTS -->
-            <div class="section">
-              <h3>Projects</h3>
-
-              <div id="projectSection">
-                <div class="section-block">
-                  <input type="text" name="project_title[]" placeholder="Project Title">
-                  <textarea name="project_description[]" rows="2"></textarea>
-                </div>
-              </div>
-
-              <button type="button" class="btn btn-secondary" onclick="addBlock('projectSection')">
-                + Add Project
-              </button>
-            </div>
-
+          <!-- TEMPLATE -->
+          <div class="section">
+            <h3>Select Template</h3>
+            <select name="template" id="templateSelect">
+              <option value="ats">ATS (Clean)</option>
+              <option value="modern">Modern</option>
+              <option value="creative">Creative</option>
+            </select>
           </div>
 
-          <div class="btn-group">
-            <button type="submit" class="btn btn-primary" formaction="/create-resume">
-              Download DOCX
-            </button>
+          <!-- AI BUTTON -->
+          <button type="button" class="btn btn-secondary" onclick="aiFill()">
+            ✨ AI Improve
+          </button>
+
+          <!-- PERSONAL -->
+          <div class="section">
+            <h3>Personal Information</h3>
+
+            <input name="name" placeholder="Full Name">
+
+            <div class="row">
+              <input name="city" placeholder="City">
+              <input name="state" placeholder="State">
+            </div>
+
+            <div class="row">
+              <input name="phone" placeholder="Phone">
+              <input name="email" placeholder="Email">
+            </div>
+
+            <input name="linkedin" placeholder="LinkedIn">
+            <input name="github" placeholder="GitHub">
+            <input name="portfolio" placeholder="Portfolio">
           </div>
+
+          <!-- SUMMARY -->
+          <div class="section">
+            <h3>Summary</h3>
+            <textarea name="summary"></textarea>
+          </div>
+
+          <!-- SKILLS -->
+          <div class="section">
+            <h3>Skills</h3>
+            <textarea name="skills"></textarea>
+            <textarea name="tools" placeholder="Tools"></textarea>
+          </div>
+
+          <!-- EDUCATION -->
+          <div class="section">
+            <h3>Education</h3>
+
+            <div id="educationSection">
+              <div class="section-block">
+                <input name="education_degree[]" placeholder="Degree">
+                <input name="education_institution[]" placeholder="Institution">
+                <input name="education_duration[]" placeholder="Duration">
+              </div>
+            </div>
+
+            <button type="button" onclick="addBlock('educationSection')">+ Add</button>
+          </div>
+
+          <!-- EXPERIENCE -->
+          <div class="section">
+            <h3>Experience</h3>
+
+            <div id="experienceSection">
+              <div class="section-block">
+                <input name="exp_title[]" placeholder="Role">
+                <input name="exp_company[]" placeholder="Company">
+                <input name="exp_duration[]" placeholder="Duration">
+                <textarea name="exp_description[]" placeholder="Description"></textarea>
+              </div>
+            </div>
+
+            <button type="button" onclick="addBlock('experienceSection')">+ Add</button>
+          </div>
+
+          <!-- PROJECTS -->
+          <div class="section">
+            <h3>Projects</h3>
+
+            <div id="projectSection">
+              <div class="section-block">
+                <input name="project_title[]" placeholder="Project">
+                <input name="project_duration[]" placeholder="Duration">
+                <textarea name="project_description[]" placeholder="Description"></textarea>
+              </div>
+            </div>
+
+            <button type="button" onclick="addBlock('projectSection')">+ Add</button>
+          </div>
+
+          <!-- ACHIEVEMENTS -->
+          <div class="section">
+            <h3>Achievements</h3>
+            <textarea name="achievements"></textarea>
+          </div>
+
+          <!-- EXTRACURRICULAR -->
+          <div class="section">
+            <h3>Extracurricular</h3>
+            <textarea name="extracurricular"></textarea>
+          </div>
+
+          <button class="btn btn-primary" formaction="/create-resume">
+            Download Resume
+          </button>
 
         </form>
-
       </div>
     </div>
 
-    <!-- RIGHT: LIVE PREVIEW -->
+    <!-- RIGHT PREVIEW -->
     <div class="preview-section">
-      <div class="container preview-box">
-
+      <div class="container">
         <h3>Live Preview</h3>
-
-        <div id="previewBox" class="resume-preview">
-          <p class="empty">Start typing to see preview...</p>
-        </div>
-
+        <div id="previewBox"></div>
       </div>
     </div>
 
@@ -124,91 +162,103 @@
   <!-- JS -->
   <script>
 
-    function addBlock(sectionId) {
-      const section = document.getElementById(sectionId);
-      const block = section.children[0].cloneNode(true);
-      block.querySelectorAll("input,textarea").forEach(el => el.value = "");
-      section.appendChild(block);
-      updatePreview();
+    function val(name) {
+      const el = document.querySelector(`[name="${name}"]`);
+      return el ? el.value : "";
     }
 
-    function getValues(name) {
-      return Array.from(document.getElementsByName(name)).map(el => el.value);
+    function getList(name) {
+      return [...document.querySelectorAll(`[name="${name}"]`)].map(e => e.value);
+    }
+
+    function formatLines(text) {
+      if (!text) return "";
+      return text.split("\n").filter(x => x.trim()).map(x => `<li>${x}</li>`).join("");
+    }
+
+    function addBlock(id) {
+      const section = document.getElementById(id);
+      const block = section.children[0].cloneNode(true);
+      block.querySelectorAll("input, textarea").forEach(el => el.value = "");
+      section.appendChild(block);
+    }
+
+    function renderTemplate(template, content) {
+      return `<div class="resume-preview ${template}">${content}</div>`;
     }
 
     function updatePreview() {
 
-      const name = document.querySelector('[name="name"]').value;
-      const city = document.querySelector('[name="city"]').value;
-      const state = document.querySelector('[name="state"]').value;
-      const phone = document.querySelector('[name="phone"]').value;
-      const email = document.querySelector('[name="email"]').value;
-      const skills = document.querySelector('[name="skills"]').value;
+      const template = document.getElementById("templateSelect").value;
 
-      const degrees = getValues("education_degree[]");
-      const institutions = getValues("education_institution[]");
-      const durations = getValues("education_duration[]");
+      const contact = [val("email"), val("phone")].filter(Boolean).join(" | ");
+      const links = [val("linkedin"), val("github"), val("portfolio")].filter(Boolean).join(" | ");
 
-      let educationHTML = "";
-      degrees.forEach((d, i) => {
-        if (d || institutions[i]) {
-          educationHTML += `<p><b>${d}</b> (${durations[i]})<br>${institutions[i]}</p>`;
+      let eduHTML = "";
+      getList("education_degree[]").forEach((d, i) => {
+        if (d) {
+          eduHTML += `<div class="entry">
+            <b>${d}</b>
+            <span class="right">${getList("education_duration[]")[i]}</span>
+            <div>${getList("education_institution[]")[i]}</div>
+          </div>`;
         }
       });
 
-      const projects = getValues("project_title[]");
-      const projectDesc = getValues("project_description[]");
-
-      let projectHTML = "";
-      projects.forEach((p, i) => {
-        if (p) {
-          projectHTML += `<p><b>${p}</b><br>${projectDesc[i]}</p>`;
+      let expHTML = "";
+      getList("exp_title[]").forEach((t, i) => {
+        if (t) {
+          expHTML += `<div class="entry">
+            <b>${t} - ${getList("exp_company[]")[i]}</b>
+            <span class="right">${getList("exp_duration[]")[i]}</span>
+            <ul>${formatLines(getList("exp_description[]")[i])}</ul>
+          </div>`;
         }
       });
 
-      document.getElementById("previewBox").innerHTML = `
-        <h2>${name || "Your Name"}</h2>
-        <p>${city || ""} ${state || ""}</p>
-        <p>${phone || ""} ${email ? "| " + email : ""}</p>
+      let projHTML = "";
+      getList("project_title[]").forEach((t, i) => {
+        if (t) {
+          projHTML += `<div class="entry">
+            <b>${t}</b>
+            <span class="right">${getList("project_duration[]")[i]}</span>
+            <ul>${formatLines(getList("project_description[]")[i])}</ul>
+          </div>`;
+        }
+      });
 
-        <hr>
+      const content = `
+        <h2>${val("name")}</h2>
+        <p class="center small">${contact}</p>
+        <p class="center small">${links}</p>
 
-        <h4>Education</h4>
-        ${educationHTML || "<p class='empty'>No education added</p>"}
-
-        <h4>Skills</h4>
-        <p>${skills || "<span class='empty'>No skills added</span>"}</p>
-
-        <h4>Projects</h4>
-        ${projectHTML || "<p class='empty'>No projects added</p>"}
+        ${val("summary") ? `<h3>Summary</h3><p>${val("summary")}</p>` : ""}
+        ${val("skills") ? `<h3>Skills</h3><p>${val("skills")}</p>` : ""}
+        ${eduHTML ? `<h3>Education</h3>${eduHTML}` : ""}
+        ${expHTML ? `<h3>Experience</h3>${expHTML}` : ""}
+        ${projHTML ? `<h3>Projects</h3>${projHTML}` : ""}
       `;
+
+      document.getElementById("previewBox").innerHTML =
+        renderTemplate(template, content);
     }
 
-    // AUTO SAVE
-    const form = document.getElementById("resumeForm");
+    async function aiFill() {
+      const text = val("summary") + "\n" + val("skills");
 
-    form.addEventListener("input", () => {
-      const data = new FormData(form);
-      const obj = {};
-      data.forEach((v, k) => obj[k] = v);
-      localStorage.setItem("resumeDraft", JSON.stringify(obj));
-    });
-
-    // LOAD SAVED DATA
-    window.onload = () => {
-      const saved = JSON.parse(localStorage.getItem("resumeDraft") || "{}");
-
-      Object.keys(saved).forEach(name => {
-        const el = document.querySelector(`[name="${name}"]`);
-        if (el) el.value = saved[name];
+      const res = await fetch("/ai-improve-text", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text })
       });
 
+      const data = await res.json();
+      document.querySelector('[name="summary"]').value = data.result;
       updatePreview();
-    };
+    }
 
-    document.querySelectorAll("input, textarea").forEach(el => {
-      el.addEventListener("input", updatePreview);
-    });
+    document.querySelectorAll("input, textarea, select")
+      .forEach(el => el.addEventListener("input", updatePreview));
 
     updatePreview();
 

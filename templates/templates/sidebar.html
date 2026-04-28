@@ -1,0 +1,44 @@
+<div class="resume sidebar">
+
+    <div class="left">
+        <h2>{{ name }}</h2>
+        <p>{{ email }}</p>
+        <p>{{ phone }}</p>
+
+        <h3>Skills</h3>
+        <p>{{ skills }}</p>
+
+        <h3>Tools</h3>
+        <p>{{ tools }}</p>
+    </div>
+
+    <div class="right">
+
+        {% if summary %}
+        <h2>About</h2>
+        <p>{{ summary }}</p>
+        {% endif %}
+
+        <h2>Experience</h2>
+        {% for exp in experiences %}
+        <p><b>{{ exp.title }}</b> - {{ exp.company }}</p>
+        <ul>
+            {% for line in exp.description.split('\n') %}
+            <li>{{ line }}</li>
+            {% endfor %}
+        </ul>
+        {% endfor %}
+
+        <h2>Projects</h2>
+        {% for p in projects %}
+        <p><b>{{ p.title }}</b></p>
+        <ul>
+            {% for line in p.description.split('\n') %}
+            <li>{{ line }}</li>
+            {% endfor %}
+        </ul>
+        {% endfor %}
+
+    </div>
+
+</div>
